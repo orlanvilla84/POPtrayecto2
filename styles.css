@@ -1,0 +1,210 @@
+/* --- CONFIGURACIÓN GENERAL --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Montserrat', sans-serif;
+    /* Suavizado de fuente HD */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    background-color: #0d0d0d; /* El "cuarto oscuro" donde está la máquina */
+    height: 100vh;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+/* --- HARDWARE (Simulación de la Valla Digital) --- */
+.kiosk-device {
+    /* Dimensiones tipo Tótem Vertical */
+    width: 50vh; 
+    height: 95vh;
+    border: 12px solid #111; /* Marco físico */
+    border-radius: 30px;
+    position: relative;
+    overflow: hidden;
+    background-color: black;
+    
+    /* Efectos de Iluminación Externa (Glow tecnológico) */
+    box-shadow: 
+        0 0 0 2px #333,
+        0 0 60px rgba(0, 255, 136, 0.15), 
+        0 20px 50px rgba(0,0,0,0.9);
+}
+
+/* --- CONTENIDO DE LA PANTALLA --- */
+.hero-container {
+    /* Imagen inicial */
+    background-image: url('assets/bg1.jpg'); 
+    background-position: center;
+    background-size: cover;
+    
+    /* Transición suave para el cambio de fotos */
+    transition: background-image 1s ease-in-out;
+    
+    /* Optimización de calidad */
+    image-rendering: -webkit-optimize-contrast;
+    
+    height: 100%;
+    width: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+    padding: 50px 25px;
+}
+
+/* Capa de contraste degradado */
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Oscuro arriba y abajo, transparente en el centro */
+    background: linear-gradient(
+        to bottom, 
+        rgba(0,0,0,0.85) 0%, 
+        rgba(0,0,0,0.2) 40%, 
+        rgba(0,0,0,0.4) 70%, 
+        rgba(0,0,0,0.95) 100%
+    );
+    z-index: 1;
+}
+
+/* --- COMPONENTES UI --- */
+
+/* 1. Badge IA (Ubicación) */
+.location-badge {
+    position: relative;
+    z-index: 3;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    padding: 10px 20px;
+    border-radius: 50px;
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 15px;
+    transition: all 0.5s ease;
+}
+
+.location-badge.found {
+    background: rgba(0, 200, 83, 0.2);
+    border-color: #00e676;
+    box-shadow: 0 0 15px rgba(0, 230, 118, 0.3);
+}
+
+.location-icon {
+    color: #00e676;
+    animation: pulse 2s infinite;
+}
+
+/* 2. Textos (Título iluminado) */
+.text-area {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    margin-top: 20px;
+}
+
+.main-title {
+    font-size: 2.5rem;
+    font-weight: 900;
+    line-height: 1.1;
+    color: #ffffff;
+    margin-bottom: 15px;
+    /* Efecto Glow en el texto */
+    text-shadow: 
+        0 0 15px rgba(0,0,0,0.9),
+        0 0 25px rgba(255, 255, 255, 0.3);
+    letter-spacing: -1px;
+}
+
+.sub-title {
+    font-size: 1.2rem;
+    font-weight: 400;
+    color: #ddd;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.9);
+}
+
+/* 3. Botones (Glassmorphism) */
+.interaction-area {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    margin-bottom: 30px;
+}
+
+.instruction {
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+    color: #fff;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 0 5px rgba(0,0,0,0.8);
+}
+
+.button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    width: 100%;
+    align-items: center;
+}
+
+.lang-btn {
+    width: 100%;
+    /* Efecto Vidrio */
+    background: rgba(255, 255, 255, 0.12); 
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    
+    padding: 22px;
+    border-radius: 20px;
+    color: white;
+    font-size: 1.3rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.lang-btn:hover {
+    background: rgba(255, 255, 255, 0.9);
+    color: #000;
+    transform: scale(1.03);
+    border-color: #fff;
+    box-shadow: 0 0 25px rgba(255, 255, 255, 0.5);
+    text-shadow: none;
+}
+
+.flag {
+    font-size: 1.5rem;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
+}
+
+/* Animación del radar */
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.3); opacity: 0.6; }
+    100% { transform: scale(1); opacity: 1; }
+}

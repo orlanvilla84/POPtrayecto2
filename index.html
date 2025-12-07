@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente Turístico Colombia</title>
+    <style>
+        /* --- 1. CONFIGURACIÓN GENERAL --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: #111; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+
+        /* --- 2. MARCO DEL CELULAR --- */
+        .phone-container {
+            position: relative; width: 100%; max-width: 400px; height: 850px;
+            border-radius: 40px; overflow: hidden; box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+            background-color: #000; border: 8px solid #1a1a1a;
+        }
+
+        /* --- 3. FONDO SLIDESHOW GLOBAL --- */
+        .slideshow { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 2s ease-in-out; }
+        .slide.active { opacity: 1; z-index: 2; }
+        .slide.prev-active { opacity: 1; z-index: 1; }
+        
+        .overlay-gradient {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.95));
+            z-index: 3; pointer-events: none;
+        }
+
+        /* --- 4. UI GENERAL --- */
+        .ui-content {
+            position: relative; z-index: 10; height: 100%; width: 100%;
+            padding: 40px 20px 20px 20px; color: white; display: flex; flex-direction: column;
+        }
+
+        /* Header */
+        .header-section { display: flex; flex-direction: column; align-items: center; margin-bottom: 10px; flex-shrink: 0; }
+        
+        /* NUEVO: Etiqueta "USTED ESTÁ AQUÍ" separada */
+        .gps-label {
+            font-size: 0.7rem;
+            color: #ddd;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 5px; /* Espacio entre el título y la píldora */
+            font-weight: 700;
+            text-shadow: 0 2px 2px rgba(0,0,0,0.8);
+        }
+
+        .pill-top {
+            background-color: rgba(0, 0, 0, 0.6); border: 1px solid #333; padding: 8px 20px;
+            border-radius: 20px; font-size: 0.8rem; display: flex; align-items: center; gap: 8px;
+            margin-bottom: 15px; transition: all 0.5s ease;
+            max-width: 90%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .dot-green { width: 8px; height: 8px; min-width: 8px; background-color: #0f0; border-radius: 50%; box-shadow: 0 0 5px #0f0; animation: parpadeo 1.5s infinite; }
+        @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
+        .titulo-somos {
+            font-size: 1.8rem; font-weight: 900; text-transform: uppercase; letter-spacing: 2px;
+            text-shadow: 2px 2px 0px #000; text-align: center;
+        }
+        .titulo-somos span:nth-child(3n+1) { color: #FFCD00; }
+        .titulo-somos span:nth-child(3n+2) { color: #003087; }
+        .titulo-somos span:nth-child(3n)   { color: #C8102E; }
+
+        /* --- 5. PANTALLAS --- */
+        .screen { flex-grow: 1; display: flex; flex-direction: column; width: 100%; transition: opacity 0.5s ease, transform 0.5s ease; overflow: hidden; }
+        .screen.hidden { display: none; opacity: 0; transform: translateY(20px); }
+        .screen.visible { display: flex; opacity: 1; transform: translateY(0); }
+
+        /* --- PANTALLA 1 (IDIOMA) --- */
+        .home-content { display: flex; flex-direction: column; justify-content: center; height: 100%; }
+        .main-title { font-size: 2.2rem; line-height: 1.2; font-weight: 800; margin-bottom: 10px; text-align: center; }
+        .subtitle { font-size: 1rem; font-weight: 300; opacity: 0.8; margin-bottom: 40px; text-align: center; }
+        .btn-group { width: 100%; display: flex; flex-direction: column; gap: 15px; margin-top: auto; padding-bottom: 20px; }
+        .btn-lang {
+            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white; padding: 18px; border-radius: 15px; font-size: 1rem; font-weight: 700; cursor: pointer;
+            transition: transform 0.2s, background 0.2s; text-transform: uppercase; display: flex; align-items: center; justify-content: center;
+        }
+        .btn-lang:hover { background: rgba(255, 255, 255, 0.25); transform: scale(1.02); }
+        .lang-code { opacity: 0.7; margin-right: 10px; font-weight: 400; }
+
+        /* BOTÓN CALIFÍCANOS */
+        .btn-rate-us {
+            margin-top: 20px; 
+            background: transparent; 
+            border: 1px solid rgba(255,205,0,0.5); 
+            color: #FFCD00; 
+            font-size: 1rem; 
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer; 
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+        .btn-rate-us:hover { background: rgba(255,205,0,0.2); transform: scale(1.05); }
+
+        /* --- PANTALLA 2 (DESTINOS) --- */
+        .destinations-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 20px; text-align: center; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+        .scroll-vertical { flex-grow: 1; overflow-y: auto; padding-bottom: 80px; scrollbar-width: none; }
+        .scroll-vertical::-webkit-scrollbar { display: none; }
+
+        .destination-card {
+            background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px; margin-bottom: 20px; overflow: hidden; position: relative;
+            cursor: pointer; transition: transform 0.3s ease; height: 200px;
+        }
+        .destination-card:hover { transform: scale(1.02); border-color: #FFCD00; }
+
+        .card-image-container { width: 100%; height: 100%; position: relative; background-color: #222; overflow: hidden; }
+        .mini-slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1s ease-in-out; }
+        .mini-slide.active { opacity: 1; z-index: 2; }
+        .card-info-main { position: absolute; bottom: 0; left: 0; width: 100%; padding: 15px; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); z-index: 5; }
+        .card-name-main { font-size: 1.5rem; font-weight: 700; text-transform: uppercase; text-shadow: 0 2px 4px black; }
+
+        /* --- PANTALLA 3 (DETALLE GUATAPÉ) --- */
+        .details-scroll-container { flex-grow: 1; overflow-y: auto; padding-bottom: 80px; scrollbar-width: none; }
+        .details-scroll-container::-webkit-scrollbar { display: none; }
+        
+        .section-header { font-size: 1.2rem; font-weight: 700; margin: 20px 0 10px 5px; color: #FFCD00; text-transform: uppercase; letter-spacing: 1px; }
+
+        .horizontal-scroll { display: flex; gap: 15px; overflow-x: auto; padding: 5px 5px 20px 5px; scroll-behavior: smooth; scrollbar-width: none; }
+        .horizontal-scroll::-webkit-scrollbar { display: none; }
+
+        .detail-card {
+            min-width: 240px; max-width: 240px; background: rgba(30, 30, 30, 0.9);
+            border-radius: 15px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);
+            display: flex; flex-direction: column;
+        }
+        .detail-img-box { height: 140px; width: 100%; background-color: #333; }
+        .detail-img { width: 100%; height: 100%; object-fit: cover; }
+        .detail-info { padding: 12px; display: flex; flex-direction: column; gap: 5px; flex-grow: 1; }
+        .detail-name { font-size: 1rem; font-weight: 700; color: white; }
+        .detail-address { font-size: 0.8rem; color: #ccc; display: flex; align-items: center; gap: 5px; }
+        .detail-phone { font-size: 0.8rem; color: #4CAF50; font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 5px; margin-top: auto; }
+
+        /* --- PANTALLA 4 (CALIFICACIONES) --- */
+        .rating-container { display: flex; flex-direction: column; align-items: center; width: 100%; height: 100%; overflow-y: auto; scrollbar-width: none; }
+        .rating-container::-webkit-scrollbar { display: none; }
+
+        .stars-box { display: flex; gap: 10px; margin-bottom: 20px; }
+        .star { 
+            font-size: 3rem; 
+            cursor: pointer; 
+            color: #ffffff; /* Blanco */
+            transition: transform 0.2s, color 0.2s;
+            text-shadow: 0 0 5px rgba(0,0,0,0.8);
+        }
+        .star:hover { transform: scale(1.2); }
+        .star.selected { 
+            color: #FFCD00; /* Dorado */
+            text-shadow: 0 0 15px rgba(255, 205, 0, 0.8);
+        }
+
+        .input-glass {
+            width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.1); color: white; font-size: 1rem; outline: none;
+        }
+        .input-glass::placeholder { color: rgba(255,255,255,0.8); }
+
+        .btn-submit {
+            background: #FFCD00; color: #000; font-weight: bold; border: none; padding: 15px; width: 100%;
+            border-radius: 15px; cursor: pointer; text-transform: uppercase; margin-bottom: 30px;
+        }
+
+        .stats-box {
+            width: 100%; background: rgba(0,0,0,0.6); border: 1px solid #333; border-radius: 15px; padding: 15px;
+            display: flex; justify-content: space-around; align-items: center; margin-bottom: 20px;
+        }
+        .stat-item { text-align: center; }
+        .stat-number { font-size: 2rem; font-weight: 900; color: #FFCD00; }
+        .stat-label { font-size: 0.8rem; text-transform: uppercase; opacity: 0.7; }
+
+        .reviews-list { width: 100%; display: flex; flex-direction: column; gap: 15px; padding-bottom: 60px; }
+        .review-card {
+            background: rgba(255,255,255,0.1); border-radius: 15px; padding: 15px; border-left: 4px solid #FFCD00;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+        
+        .review-header { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .review-name { font-weight: 700; color: white; }
+        .review-stars { color: #FFCD00; font-size: 0.9rem; }
+        .review-text { font-size: 0.9rem; color: #ddd; font-style: italic; }
+
+        .btn-back-floating {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.8); border: 1px solid #555; color: white; padding: 10px 20px;
+            border-radius: 30px; cursor: pointer; z-index: 20; backdrop-filter: blur(5px); display: flex; align-items: center; gap: 5px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="phone-container">
+        
+        <div class="slideshow">
+            <img src="assets/bg1.jpg" class="slide active" alt="Bg 1">
+            <img src="assets/bg3.jpg" class="slide" alt="Bg 3">
+            <img src="assets/bg4.jpg" class="slide" alt="Bg 4">
+            <img src="assets/bg5.jpg" class="slide" alt="Bg 5">
+            <img src="assets/bg6.jpg" class="slide" alt="Bg 6">
+        </div>
+        <div class="overlay-gradient"></div>
+
+        <div class="ui-content">
+            <div class="header-section">
+                
+                <div class="gps-label">USTED ESTÁ AQUÍ:</div>
+                
+                <div class="pill-top" id="estado-gps">
+                    <span class="dot-green"></span>
+                    <span id="texto-gps">Escaneando entorno...</span>
+                </div>
+
+                <div class="titulo-somos">
+                    <span>S</span><span>O</span><span>M</span><span>O</span><span>S</span>
+                    <span>&nbsp;</span>
+                    <span>C</span><span>O</span><span>L</span><span>O</span><span>M</span><span>B</span><span>I</span><span>A</span>
+                </div>
+            </div>
+
+            <div id="screen-1" class="screen visible">
+                <div class="home-content">
+                    <h1 class="main-title">Bienvenido a tu<br>Asistente Turístico</h1>
+                    <p class="subtitle">Welcome / Bienvenue</p>
+                    <div class="btn-group">
+                        <button class="btn-lang" onclick="goToDestinations('es')"><span class="lang-code">ES</span> ESPAÑOL</button>
+                        <button class="btn-lang" onclick="goToDestinations('en')"><span class="lang-code">US</span> ENGLISH</button>
+                        <button class="btn-lang" onclick="goToDestinations('fr')"><span class="lang-code">FR</span> FRANÇAIS</button>
+                    </div>
+
+                    <button class="btn-rate-us" onclick="goToRatings()">⭐ ¡Califícanos!</button>
+                </div>
+            </div>
+
+            <div id="screen-2" class="screen hidden">
+                <h2 class="destinations-title" id="destinations-title">Destinos Populares</h2>
+                <div class="scroll-vertical">
+                    <div class="destination-card" onclick="goToGuatapeDetails()">
+                        <div class="card-image-container" data-mini-slideshow>
+                            <img src="assets/Guatape/g1.jpg" class="mini-slide active">
+                            <img src="assets/Guatape/g2.jpg" class="mini-slide">
+                            <img src="assets/Guatape/g3.jpg" class="mini-slide">
+                        </div>
+                        <div class="card-info-main"><div class="card-name-main">Guatapé</div></div>
+                    </div>
+                    <div class="destination-card" onclick="alert('Próximamente')">
+                        <div class="card-image-container" data-mini-slideshow>
+                            <img src="assets/Cartagena/c1.jpg" class="mini-slide active">
+                            <img src="assets/Cartagena/c2.avif" class="mini-slide">
+                            <img src="assets/Cartagena/c3.webp" class="mini-slide">
+                        </div>
+                        <div class="card-info-main"><div class="card-name-main">Cartagena</div></div>
+                    </div>
+                    <div class="destination-card" onclick="alert('Próximamente')">
+                        <div class="card-image-container" data-mini-slideshow>
+                            <img src="assets/ecafetero/e1.png" class="mini-slide active">
+                            <img src="assets/ecafetero/e2.jpg" class="mini-slide">
+                            <img src="assets/ecafetero/e3.webp" class="mini-slide">
+                        </div>
+                        <div class="card-info-main"><div class="card-name-main">Eje Cafetero</div></div>
+                    </div>
+                    <div class="destination-card" onclick="alert('Próximamente')">
+                        <div class="card-image-container" data-mini-slideshow>
+                            <img src="assets/Amazonas/a1.jpg" class="mini-slide active">
+                            <img src="assets/Amazonas/a2.jpg" class="mini-slide">
+                            <img src="assets/Amazonas/a3.jpg" class="mini-slide">
+                        </div>
+                        <div class="card-info-main"><div class="card-name-main">Amazonas</div></div>
+                    </div>
+                </div>
+                <button class="btn-back-floating" onclick="goBackToHome()"><span>⬅ Idioma</span></button>
+            </div>
+
+            <div id="screen-3" class="screen hidden">
+                <h2 class="destinations-title" id="guatape-title">Explora Guatapé</h2>
+                <div class="details-scroll-container">
+                    
+                    <div class="section-header" id="header-hotels">🏨 Hoteles</div>
+                    <div class="horizontal-scroll" id="list-hotels"></div>
+
+                    <div class="section-header" id="header-food">🍽️ Gastronomía</div>
+                    <div class="horizontal-scroll" id="list-food"></div>
+
+                    <div class="section-header" id="header-fun">🎉 Diversión</div>
+                    <div class="horizontal-scroll" id="list-fun"></div>
+                </div>
+                <button class="btn-back-floating" onclick="goBackToDestinations()">
+                    <span id="btn-back-guatape">⬅ Volver</span>
+                </button>
+            </div>
+
+            <div id="screen-4" class="screen hidden">
+                <div class="rating-container">
+                    <h2 class="destinations-title">¡Danos tu Opinión!</h2>
+                    <div style="width:100%; text-align:center;">
+                        <p style="margin-bottom:10px;">¿Qué te pareció la aplicación?</p>
+                        <div class="stars-box" id="stars-container">
+                            <span class="star" data-value="1">★</span>
+                            <span class="star" data-value="2">★</span>
+                            <span class="star" data-value="3">★</span>
+                            <span class="star" data-value="4">★</span>
+                            <span class="star" data-value="5">★</span>
+                        </div>
+                        <input type="text" id="input-name" class="input-glass" placeholder="Tu Nombre">
+                        <input type="text" id="input-comment" class="input-glass" placeholder="Escribe un comentario...">
+                        <button class="btn-submit" onclick="submitReview()">Enviar Calificación</button>
+                    </div>
+                    <div class="stats-box">
+                        <div class="stat-item">
+                            <div class="stat-number" id="avg-rating">0.0</div>
+                            <div class="stat-label">Promedio</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="total-votes">0</div>
+                            <div class="stat-label">Votos</div>
+                        </div>
+                    </div>
+                    <h3 style="margin-bottom:15px; align-self:flex-start;">Comentarios:</h3>
+                    <div class="reviews-list" id="reviews-list"></div>
+                </div>
+                <button class="btn-back-floating" onclick="goBackToHome()"><span>⬅ Inicio</span></button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        /* --- GESTIÓN DE IDIOMAS Y DATOS DE GUATAPÉ --- */
+        let currentLang = 'es';
+
+        const guatapeData = {
+            es: {
+                title: "Explora Guatapé",
+                headers: { hotels: "🏨 Hoteles", food: "🍽️ Gastronomía", fun: "🎉 Diversión" },
+                back: "⬅ Volver",
+                hotels: [
+                    { name: "Luxé Cabañas", addr: "📍 Vereda Los Naranjos", phone: "315 824 8179", img: "assets/Guatape/Hoteles/luxe-by-the-charlee.jpg" },
+                    { name: "Manantiales del Campo", addr: "📍 Km 15 Vía San Rafael", phone: "310 376 8749", img: "assets/Guatape/Hoteles/manantialescampo.jpg" },
+                    { name: "Oak Tree Hostel", addr: "📍 Vereda El Roble", phone: "320 417 2497", img: "assets/Guatape/Hoteles/oak-tree-hostel-guatape.jpg" }
+                ],
+                food: [
+                    { name: "Casa Cuba", addr: "📍 Calle 30 # 30-232", phone: "317 615 7371", img: "assets/Guatape/Restaurantes/casa-cuba.jpg" },
+                    { name: "Thai Terrace", addr: "📍 Carrera 22 #29B-29", phone: "321 493 7060", img: "assets/Guatape/Restaurantes/thaiterrace.jpg" },
+                    { name: "Folklore Restaurante", addr: "📍 Calle 31 29 12", phone: "319 356 4602", img: "assets/Guatape/Restaurantes/folklore.jpg" }
+                ],
+                fun: [
+                    { name: "Piedra del Peñol", addr: "📍 Vía Peñol - Guatapé", info: "🎟️ Entrada en taquilla", img: "assets/Guatape/Diversion/peñol.jpg" },
+                    { name: "Parque Comfama", addr: "📍 Km 10 Vía Guatapé", phone: "604 360 70 80", img: "assets/Guatape/Diversion/comfama.jpg" },
+                    { name: "Lanchivas Tours", addr: "📍 Malecón de Guatapé", info: "⛵ Reservas en sitio", img: "assets/Guatape/Diversion/lanchivas-the-best-boats.jpg" }
+                ]
+            },
+            en: {
+                title: "Explore Guatapé",
+                headers: { hotels: "🏨 Hotels", food: "🍽️ Gastronomy", fun: "🎉 Fun & Activities" },
+                back: "⬅ Back",
+                hotels: [
+                    { name: "Luxé Cabins", addr: "📍 Los Naranjos Road", phone: "315 824 8179", img: "assets/Guatape/Hoteles/luxe-by-the-charlee.jpg" },
+                    { name: "Manantiales Resort", addr: "📍 Km 15 San Rafael Rd", phone: "310 376 8749", img: "assets/Guatape/Hoteles/manantialescampo.jpg" },
+                    { name: "Oak Tree Hostel", addr: "📍 El Roble Road", phone: "320 417 2497", img: "assets/Guatape/Hoteles/oak-tree-hostel-guatape.jpg" }
+                ],
+                food: [
+                    { name: "Casa Cuba", addr: "📍 St 30 # 30-232", phone: "317 615 7371", img: "assets/Guatape/Restaurantes/casa-cuba.jpg" },
+                    { name: "Thai Terrace", addr: "📍 Cra 22 #29B-29", phone: "321 493 7060", img: "assets/Guatape/Restaurantes/thaiterrace.jpg" },
+                    { name: "Folklore Restaurant", addr: "📍 St 31 29 12", phone: "319 356 4602", img: "assets/Guatape/Restaurantes/folklore.jpg" }
+                ],
+                fun: [
+                    { name: "The Peñol Rock", addr: "📍 Peñol - Guatapé Rd", info: "🎟️ Ticket at entrance", img: "assets/Guatape/Diversion/peñol.jpg" },
+                    { name: "Comfama Park", addr: "📍 Km 10 Guatapé Rd", phone: "604 360 70 80", img: "assets/Guatape/Diversion/comfama.jpg" },
+                    { name: "Lanchivas Tours", addr: "📍 Guatapé Boardwalk", info: "⛵ Book on site", img: "assets/Guatape/Diversion/lanchivas-the-best-boats.jpg" }
+                ]
+            },
+            fr: {
+                title: "Découvrez Guatapé",
+                headers: { hotels: "🏨 Hôtels", food: "🍽️ Gastronomie", fun: "🎉 Divertissement" },
+                back: "⬅ Retour",
+                hotels: [
+                    { name: "Luxé Cabanes", addr: "📍 Route Los Naranjos", phone: "315 824 8179", img: "assets/Guatape/Hoteles/luxe-by-the-charlee.jpg" },
+                    { name: "Manantiales Resort", addr: "📍 Km 15 Rte San Rafael", phone: "310 376 8749", img: "assets/Guatape/Hoteles/manantialescampo.jpg" },
+                    { name: "Oak Tree Auberge", addr: "📍 Route El Roble", phone: "320 417 2497", img: "assets/Guatape/Hoteles/oak-tree-hostel-guatape.jpg" }
+                ],
+                food: [
+                    { name: "Casa Cuba", addr: "📍 Rue 30 # 30-232", phone: "317 615 7371", img: "assets/Guatape/Restaurantes/casa-cuba.jpg" },
+                    { name: "Thai Terrace", addr: "📍 Cra 22 #29B-29", phone: "321 493 7060", img: "assets/Guatape/Restaurantes/thaiterrace.jpg" },
+                    { name: "Folklore Restaurant", addr: "📍 Rue 31 29 12", phone: "319 356 4602", img: "assets/Guatape/Restaurantes/folklore.jpg" }
+                ],
+                fun: [
+                    { name: "Rocher de Peñol", addr: "📍 Rte Peñol - Guatapé", info: "🎟️ Billets à l'entrée", img: "assets/Guatape/Diversion/peñol.jpg" },
+                    { name: "Parc Comfama", addr: "📍 Km 10 Rte Guatapé", phone: "604 360 70 80", img: "assets/Guatape/Diversion/comfama.jpg" },
+                    { name: "Lanchivas Tours", addr: "📍 Jetée de Guatapé", info: "⛵ Réservation sur place", img: "assets/Guatape/Diversion/lanchivas-the-best-boats.jpg" }
+                ]
+            }
+        };
+
+        /* --- NAVEGACIÓN --- */
+        function switchScreen(hideId, showId) {
+            document.getElementById(hideId).classList.remove('visible');
+            document.getElementById(hideId).classList.add('hidden');
+            document.getElementById(showId).classList.remove('hidden');
+            document.getElementById(showId).classList.add('visible');
+        }
+
+        function goToDestinations(lang) {
+            currentLang = lang;
+            const titles = { es: "Destinos Populares", en: "Popular Destinations", fr: "Destinations Populaires" };
+            document.getElementById('destinations-title').innerText = titles[lang];
+            switchScreen('screen-1', 'screen-2');
+        }
+
+        function goBackToHome() {
+            // Regresar al Home y cerrar todo lo demás
+            ['screen-2', 'screen-3', 'screen-4'].forEach(id => {
+                document.getElementById(id).classList.remove('visible');
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById('screen-1').classList.remove('hidden');
+            document.getElementById('screen-1').classList.add('visible');
+        }
+
+        function goToGuatapeDetails() {
+            renderGuatapeContent(currentLang);
+            switchScreen('screen-2', 'screen-3');
+        }
+
+        function goBackToDestinations() {
+            switchScreen('screen-3', 'screen-2');
+        }
+
+        function goToRatings() {
+            switchScreen('screen-1', 'screen-4');
+        }
+
+        /* --- GENERADOR DE TARJETAS DE GUATAPÉ --- */
+        function renderGuatapeContent(lang) {
+            const data = guatapeData[lang];
+            document.getElementById('guatape-title').innerText = data.title;
+            document.getElementById('header-hotels').innerText = data.headers.hotels;
+            document.getElementById('header-food').innerText = data.headers.food;
+            document.getElementById('header-fun').innerText = data.headers.fun;
+            document.getElementById('btn-back-guatape').innerText = data.back;
+
+            const createCard = (item) => {
+                let contactInfo = "";
+                if (item.phone) {
+                    const cleanPhone = item.phone.replace(/\s/g, '');
+                    contactInfo = `<a href="tel:${cleanPhone}" class="detail-phone">📞 ${item.phone}</a>`;
+                } else {
+                    contactInfo = `<span class="detail-phone">${item.info}</span>`;
+                }
+                return `
+                    <div class="detail-card">
+                        <div class="detail-img-box"><img src="${item.img}" class="detail-img"></div>
+                        <div class="detail-info">
+                            <div class="detail-name">${item.name}</div>
+                            <div class="detail-address">${item.addr}</div>
+                            ${contactInfo}
+                        </div>
+                    </div>
+                `;
+            };
+
+            document.getElementById('list-hotels').innerHTML = data.hotels.map(createCard).join('');
+            document.getElementById('list-food').innerHTML = data.food.map(createCard).join('');
+            document.getElementById('list-fun').innerHTML = data.fun.map(createCard).join('');
+        }
+
+        /* --- CALIFICACIONES (LOCALSTORAGE) --- */
+        let currentRating = 0;
+        let reviews = JSON.parse(localStorage.getItem('appReviews')) || []; 
+        updateStats();
+        renderReviews();
+
+        const stars = document.querySelectorAll('.star');
+        stars.forEach(star => {
+            star.addEventListener('click', () => {
+                currentRating = parseInt(star.getAttribute('data-value'));
+                updateStarsUI(currentRating);
+            });
+        });
+
+        function updateStarsUI(rating) {
+            stars.forEach(s => {
+                s.classList.toggle('selected', parseInt(s.getAttribute('data-value')) <= rating);
+            });
+        }
+
+        function submitReview() {
+            const name = document.getElementById('input-name').value;
+            const comment = document.getElementById('input-comment').value;
+
+            if (currentRating === 0 || name.trim() === "") {
+                alert("Por favor completa las estrellas y tu nombre.");
+                return;
+            }
+
+            const newReview = { name, rating: currentRating, comment };
+            reviews.unshift(newReview);
+            localStorage.setItem('appReviews', JSON.stringify(reviews));
+
+            document.getElementById('input-name').value = "";
+            document.getElementById('input-comment').value = "";
+            currentRating = 0;
+            updateStarsUI(0);
+            updateStats();
+            renderReviews();
+            alert("¡Gracias!");
+        }
+
+        function updateStats() {
+            if (reviews.length === 0) {
+                document.getElementById('avg-rating').innerText = "0.0";
+                document.getElementById('total-votes').innerText = "0";
+                return;
+            }
+            const sum = reviews.reduce((acc, curr) => acc + curr.rating, 0);
+            document.getElementById('avg-rating').innerText = (sum / reviews.length).toFixed(1);
+            document.getElementById('total-votes').innerText = reviews.length;
+        }
+
+        function renderReviews() {
+            const list = document.getElementById('reviews-list');
+            list.innerHTML = "";
+            reviews.forEach(review => {
+                let starString = "★".repeat(review.rating) + "☆".repeat(5 - review.rating);
+                const card = document.createElement('div');
+                card.className = "review-card";
+                card.innerHTML = `
+                    <div class="review-header"><span class="review-name">${review.name}</span><span class="review-stars">${starString}</span></div>
+                    <div class="review-text">"${review.comment}"</div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        /* --- SLIDERS --- */
+        const globalSlides = document.querySelectorAll('.slideshow .slide');
+        let currentGlobal = 0;
+        setInterval(() => {
+            const active = globalSlides[currentGlobal];
+            currentGlobal = (currentGlobal + 1) % globalSlides.length;
+            const next = globalSlides[currentGlobal];
+            active.classList.remove('active'); active.classList.add('prev-active');
+            next.classList.add('active');
+            setTimeout(() => active.classList.remove('prev-active'), 2000);
+        }, 5000);
+
+        const miniContainers = document.querySelectorAll('[data-mini-slideshow]');
+        miniContainers.forEach(container => {
+            const minis = container.querySelectorAll('.mini-slide');
+            let miniIndex = 0;
+            setInterval(() => {
+                minis[miniIndex].classList.remove('active');
+                miniIndex = (miniIndex + 1) % minis.length;
+                minis[miniIndex].classList.add('active');
+            }, 2000); 
+        });
+
+        /* --- GPS SIMULATION (ESTÁTICO) --- */
+        setTimeout(() => {
+            const gpsText = document.getElementById('texto-gps');
+            const pill = document.getElementById('estado-gps');
+            // Ubicación fija solo con el nombre del sitio
+            gpsText.innerText = "📍 Aeropuerto El Dorado, Bogotá";
+            pill.style.backgroundColor = "rgba(0, 100, 0, 0.6)"; 
+            pill.style.borderColor = "#0f0";
+        }, 3500);
+
+    </script>
+</body>
+</html>
